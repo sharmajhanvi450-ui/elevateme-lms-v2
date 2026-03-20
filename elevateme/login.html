@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login · ElevateMe Career Bootcamp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: linear-gradient(135deg, #e8f5ee 0%, #c8ecd4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-container {
+            max-width: 440px;
+            width: 100%;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: #0a1a0f;
+        }
+        
+        .logo h1 span {
+            color: #2d7a4f;
+        }
+        
+        .logo p {
+            color: #4a6b55;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2d4a35;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border: 1px solid #c8ecd4;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #2d7a4f;
+            box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            background: #2d7a4f;
+            color: white;
+            border: none;
+            padding: 0.9rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-login:hover {
+            background: #1f5c38;
+            transform: translateY(-1px);
+        }
+        
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .forgot-link {
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+        
+        .forgot-link a {
+            color: #2d7a4f;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #c65343;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .info-message {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e8f5ee;
+            font-size: 0.75rem;
+            color: #4a6b55;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo">
+                <h1>Elevate<span>Me</span></h1>
+                <p>Career Bootcamp</p>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" required placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                
+                <div class="forgot-link">
+                    <a href="forgot-password.html">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn-login" id="loginBtn">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="info-message">
+                <i class="fas fa-shield-alt"></i> Secure login · Your progress is saved
+            </div>
+        </div>
+    </div>
+    
+    <script src="shared/supabase.js"></script>
+    <script>
+        // Override initSupabase to use our keys
+        const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o';
+        
+        let supabaseClient = null;
+        
+        async function initSupabaseLocal() {
+            if (!supabaseClient) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return supabaseClient;
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Signing In...';
+            errorDiv.classList.remove('show');
+            
+            const client = await initSupabaseLocal();
+            const { data, error } = await client.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = 'Sign In';
+                return;
+            }
+            
+            // Update last_active in profiles
+            if (data.user) {
+                await client
+                    .from('profiles')
+                    .update({ last_active: new Date().toISOString() })
+                    .eq('id', data.user.id);
+            }
+            
+            // Redirect based on role
+            const { data: profile } = await client
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .single();
+            
+            if (profile?.role === 'admin' || profile?.role === 'coach') {
+                window.location.href = '/admin/';
+            } else {
+                window.location.href = '/';
+            }
+        });
+        
+        // Check if already logged in
+        (async () => {
+            const client = await initSupabaseLocal();
+            const { data: { user } } = await client.auth.getUser();
+            if (user) {
+                const { data: profile } = await client
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile?.role === 'admin' || profile?.role === 'coach') {
+                    window.location.href = '/admin/';
+                } else {
+                    window.location.href = '/';
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
