@@ -144,6 +144,20 @@
             display: block;
         }
         
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
         .info-message {
             text-align: center;
             margin-top: 1.5rem;
@@ -177,6 +191,9 @@
                 <p>Career Bootcamp</p>
             </div>
             
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i> Password reset successfully! Please login with your new password.
+            </div>
             <div class="error-message" id="errorMessage"></div>
             
             <form id="loginForm">
@@ -191,7 +208,7 @@
                 </div>
                 
                 <div class="forgot-link">
-                    <a href="forgot-password.html">Forgot password?</a>
+                    <a href="reset.html">Forgot password?</a>
                 </div>
                 
                 <button type="submit" class="btn-login" id="loginBtn">
@@ -200,24 +217,30 @@
             </form>
             
             <div class="info-message">
-                <i class="fas fa-shield-alt"></i> Secure login · Your progress is saved
+                <i class="fas fa-shield-alt"></i> Secure login · Your progress is saved in the cloud
             </div>
         </div>
     </div>
     
-    <script src="shared/supabase.js"></script>
     <script>
-        // Override initSupabase to use our keys
         const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o';
         
         let supabaseClient = null;
         
-        async function initSupabaseLocal() {
+        async function initSupabase() {
             if (!supabaseClient) {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
             return supabaseClient;
+        }
+        
+        // Check if reset was successful
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reset') === 'success') {
+            document.getElementById('successMessage').classList.add('show');
+            // Remove the query param from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
         
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -227,12 +250,14 @@
             const password = document.getElementById('password').value;
             const btn = document.getElementById('loginBtn');
             const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
             
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Signing In...';
             errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
             
-            const client = await initSupabaseLocal();
+            const client = await initSupabase();
             const { data, error } = await client.auth.signInWithPassword({
                 email: email,
                 password: password
@@ -270,7 +295,7 @@
         
         // Check if already logged in
         (async () => {
-            const client = await initSupabaseLocal();
+            const client = await initSupabase();
             const { data: { user } } = await client.auth.getUser();
             if (user) {
                 const { data: profile } = await client
