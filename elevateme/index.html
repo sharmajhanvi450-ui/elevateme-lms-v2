@@ -6,6 +6,7 @@
     <title>ElevateMe · Career Bootcamp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="shared/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ── FONT & GLOBAL STYLES ── */
         body { 
@@ -90,6 +91,32 @@
         .done-badge { background: #2d7a4f; }
         .week-card.locked .lock-badge { display: flex; }
         .week-card.completed .done-badge { display: flex; }
+
+        /* User info bar */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-email {
+            font-size: 0.8rem;
+            color: #2d4a35;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid #c8ecd4;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #c65343;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover {
+            background: #fee2e2;
+            border-color: #c65343;
+        }
     </style>
 </head>
 <body>
@@ -99,7 +126,10 @@
     <div class="nav-links">
         <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Mode</span>
         <a href="/" class="active">Dashboard</a>
-        <a href="#" class="btn-accent">Student Portal</a>
+        <div class="user-info" id="userInfo" style="display: none;">
+            <span class="user-email" id="userEmail"></span>
+            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
     </div>
 </nav>
 
@@ -140,15 +170,135 @@
 <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
 
 <script>
+// Supabase Configuration
+const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o';
+
+let supabaseClient = null;
+let currentUser = null;
+let currentUserProfile = null;
+
+// Initialize Supabase
+async function initSupabase() {
+    if (!supabaseClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return supabaseClient;
+}
+
+// Check authentication
+async function checkAuth() {
+    const client = await initSupabase();
+    const { data: { user }, error } = await client.auth.getUser();
+    
+    if (error || !user) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    
+    currentUser = user;
+    
+    // Get user profile
+    const { data: profile } = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+    
+    currentUserProfile = profile;
+    
+    // Show user info in navbar
+    const userInfo = document.getElementById('userInfo');
+    const userEmail = document.getElementById('userEmail');
+    if (userInfo && userEmail) {
+        userEmail.textContent = profile?.email || user.email;
+        userInfo.style.display = 'flex';
+    }
+    
+    // Show admin badge if admin or coach
+    const adminBadge = document.querySelector('.admin-badge');
+    if (adminBadge && (profile?.role === 'admin' || profile?.role === 'coach')) {
+        adminBadge.style.display = 'flex';
+    }
+    
+    // Update last active
+    await client
+        .from('profiles')
+        .update({ last_active: new Date().toISOString() })
+        .eq('id', user.id);
+    
+    return true;
+}
+
+// Load user progress from Supabase
+async function loadUserProgress() {
+    if (!supabaseClient || !currentUser) return {};
+    
+    const { data, error } = await supabaseClient
+        .from('progress')
+        .select('*')
+        .eq('user_id', currentUser.id);
+    
+    if (error) {
+        console.error('Error loading progress:', error);
+        return {};
+    }
+    
+    const progress = {};
+    data.forEach(item => {
+        progress[item.module_id] = item.completed;
+    });
+    
+    return progress;
+}
+
+// Calculate week progress from module progress
+function calculateWeekProgress(progress, weekNum, totalModules) {
+    let completed = 0;
+    for (let m = 1; m <= totalModules; m++) {
+        const moduleId = `w${weekNum}m${m}`;
+        if (progress[moduleId]) completed++;
+    }
+    return Math.round((completed / totalModules) * 100);
+}
+
+// Save week progress to Supabase
+async function saveWeekProgressToCloud(weekNum, progressPercent) {
+    if (!supabaseClient || !currentUser) return;
+    
+    await supabaseClient
+        .from('week_progress')
+        .upsert({
+            user_id: currentUser.id,
+            week_num: weekNum,
+            progress_percent: progressPercent,
+            updated_at: new Date().toISOString()
+        }, {
+            onConflict: 'user_id,week_num'
+        });
+}
+
+// Handle logout
+async function handleLogout() {
+    const client = await initSupabase();
+    await client.auth.signOut();
+    localStorage.clear();
+    window.location.href = '/login.html';
+}
+
+// Make logout available globally
+window.handleLogout = handleLogout;
+
+// Admin mode detection
 const IS_ADMIN = new URLSearchParams(location.search).get('admin') === 'true';
 if (IS_ADMIN) document.body.classList.add('is-admin');
 
-// CUSTOM LOGO (Corrected)
+// Custom logo
 document.querySelectorAll('.logo-area').forEach(el => {
     el.innerHTML = `<span style="font-size:1.3rem;font-weight:900;letter-spacing:-0.02em;color:#161616;">Elevate<span style="color:#2d7a4f;">Me</span></span>`;
 });
 
-// FULL 10-WEEK CURRICULUM RESTORED
+// Full 10-week curriculum
 const WEEKS = [
     { n:1, title:'Foundations & Job Search',      desc:'Welcome, job search worksheet, coach calls, time management.', icon:'fa-flag',       modules:5, url:'week1/' },
     { n:2, title:'ATS & Resume Mastery',           desc:'ATS systems, resume structure, LinkedIn, recruitment process.', icon:'fa-file-lines', modules:10, url:'week2/' },
@@ -162,17 +312,37 @@ const WEEKS = [
     { n:10, title:'Success on the Job',              desc:'30-60-90 day plan, 5-year roadmap, career success habits.',      icon:'fa-trophy',      modules:3, url:'week10/' },
 ];
 
-function getWeekProgress(n) { return parseInt(localStorage.getItem(`em_week${n}_progress`) || '0'); }
-function isWeekComplete(n) { return getWeekProgress(n) >= 100; }
+// Get week progress from localStorage (fallback) or Supabase
+let cloudProgress = {};
 
-function renderGrid() {
+function getWeekProgress(n) {
+    // If we have cloud progress, use it
+    if (cloudProgress[n] !== undefined) {
+        return cloudProgress[n];
+    }
+    // Fallback to localStorage
+    return parseInt(localStorage.getItem(`em_week${n}_progress`) || '0');
+}
+
+function isWeekComplete(n) {
+    return getWeekProgress(n) >= 100;
+}
+
+async function renderGrid() {
     const grid = document.getElementById('weekGrid');
+    if (!grid) return;
+    
     grid.innerHTML = '';
     let totalPct = 0;
-    WEEKS.forEach(w => { totalPct += getWeekProgress(w.n); });
+    
+    // Calculate total progress from cloud data
+    WEEKS.forEach(w => {
+        totalPct += getWeekProgress(w.n);
+    });
+    
     const overall = Math.round(totalPct / WEEKS.length);
     document.getElementById('overallBar').style.width = overall + '%';
-    document.getElementById('overallPct').textContent  = overall + '%';
+    document.getElementById('overallPct').textContent = overall + '%';
 
     WEEKS.forEach((w, i) => {
         const pct = getWeekProgress(w.n);
@@ -207,7 +377,78 @@ function renderGrid() {
         grid.appendChild(card);
     });
 }
-renderGrid();
+
+// Load all week progress from Supabase
+async function loadAllWeekProgress() {
+    if (!supabaseClient || !currentUser) return;
+    
+    const { data, error } = await supabaseClient
+        .from('week_progress')
+        .select('week_num, progress_percent')
+        .eq('user_id', currentUser.id);
+    
+    if (error) {
+        console.error('Error loading week progress:', error);
+        return;
+    }
+    
+    // Populate cloudProgress object
+    data.forEach(item => {
+        cloudProgress[item.week_num] = item.progress_percent;
+    });
+    
+    // Also save to localStorage for fallback
+    WEEKS.forEach(week => {
+        const pct = cloudProgress[week.n] || 0;
+        localStorage.setItem(`em_week${week.n}_progress`, pct);
+    });
+    
+    // Re-render grid with cloud data
+    await renderGrid();
+}
+
+// Listen for storage events to sync across tabs
+window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith('em_week')) {
+        renderGrid();
+    }
+});
+
+// Also listen for focus events
+window.addEventListener('focus', renderGrid);
+
+// Initialize the page
+(async function init() {
+    await initSupabase();
+    const authSuccess = await checkAuth();
+    
+    if (authSuccess) {
+        // Load all week progress from cloud
+        await loadAllWeekProgress();
+        
+        // Also load module progress for any custom logic
+        const moduleProgress = await loadUserProgress();
+        
+        // Sync module progress to localStorage for compatibility with existing app.js
+        if (Object.keys(moduleProgress).length > 0) {
+            let completed = JSON.parse(localStorage.getItem('em_completed') || '{}');
+            let changed = false;
+            
+            Object.keys(moduleProgress).forEach(moduleId => {
+                if (moduleProgress[moduleId] && !completed[moduleId]) {
+                    completed[moduleId] = true;
+                    changed = true;
+                }
+            });
+            
+            if (changed) {
+                localStorage.setItem('em_completed', JSON.stringify(completed));
+            }
+        }
+        
+        renderGrid();
+    }
+})();
 </script>
 </body>
 </html>
