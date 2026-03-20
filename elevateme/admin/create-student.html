@@ -9,157 +9,29 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Nunito Sans', sans-serif;
-            background: #e8f5ee;
-        }
-        .navbar {
-            background: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #c8ecd4;
-        }
-        .logo h2 {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: #0a1a0f;
-        }
-        .logo h2 span { color: #2d7a4f; }
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            text-decoration: none;
-            color: #2d4a35;
-            font-weight: 600;
-        }
-        .btn-logout {
-            background: none;
-            border: 1px solid #c8ecd4;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #c65343;
-        }
-        .main-container {
-            max-width: 600px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-        }
-        .form-card {
-            background: white;
-            border-radius: 24px;
-            padding: 2rem;
-            border: 1px solid #c8ecd4;
-        }
-        .form-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #0a1a0f;
-            margin-bottom: 1.5rem;
-        }
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #2d4a35;
-            margin-bottom: 0.5rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid #c8ecd4;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #2d7a4f;
-        }
-        .btn-create {
-            width: 100%;
-            background: #2d7a4f;
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 800;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        .btn-create:hover { background: #1f5c38; }
-        .btn-back {
-            background: transparent;
-            border: 1px solid #c8ecd4;
-            padding: 0.7rem 1rem;
-            border-radius: 10px;
-            color: #2d7a4f;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 1rem;
-            text-align: center;
-            width: 100%;
-        }
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .error-message {
-            background: #fee2e2;
-            color: #c65343;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .success-message.show, .error-message.show { display: block; }
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .generated-password {
-            background: #f4faf7;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 0.85rem;
-            margin: 0.5rem 0;
-            display: none;
-        }
+        body { font-family: 'Nunito Sans', sans-serif; background: #e8f5ee; }
+        .navbar { background: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c8ecd4; }
+        .logo h2 { font-size: 1.5rem; font-weight: 900; color: #0a1a0f; }
+        .logo h2 span { color: var(--brand-teal); }
+        .main-container { max-width: 600px; margin: 3rem auto; padding: 0 2rem; }
+        .form-card { background: white; border-radius: 24px; padding: 2.5rem; border: 1px solid #c8ecd4; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .form-title { font-size: 1.5rem; font-weight: 800; color: #0a1a0f; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #2d4a35; margin-bottom: 0.5rem; }
+        .form-group input { width: 100%; padding: 0.9rem 1rem; border: 1px solid #c8ecd4; border-radius: 12px; font-size: 0.95rem; }
+        .btn-create { width: 100%; background: #2d7a4f; color: white; border: none; padding: 1rem; border-radius: 12px; font-size: 0.9rem; font-weight: 800; cursor: pointer; margin-top: 1rem; }
+        .success-message { background: #d4edda; color: #155724; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; display: none; font-size: 0.85rem; }
+        .error-message { background: #fee2e2; color: #c65343; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; display: none; font-size: 0.85rem; }
+        .show { display: block; }
+        .generated-password { background: #f4faf7; padding: 1rem; border-radius: 12px; border: 1px dashed #2d7a4f; margin: 1rem 0; display: none; }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo">
-            <h2>Elevate<span>Me</span></h2>
-        </div>
+        <div class="logo"><h2>Elevate<span>Me</span></h2></div>
         <div class="nav-links">
             <a href="/admin/">Dashboard</a>
-            <a href="/admin/create-student.html">Add Student</a>
-            <button class="btn-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
         </div>
     </nav>
     
@@ -168,153 +40,94 @@
             <h1 class="form-title"><i class="fas fa-user-plus"></i> Add New Student</h1>
             
             <div class="success-message" id="successMessage">
-                <i class="fas fa-check-circle"></i> Student created successfully!
+                <i class="fas fa-check-circle"></i> Account invitation triggered!
             </div>
             <div class="error-message" id="errorMessage"></div>
-            <div class="generated-password" id="generatedPassword"></div>
             
-            <form id="createForm">
+            <div class="generated-password" id="passwordDisplay">
+                <p style="font-size:0.8rem; font-weight:700; color:#2d7a4f; margin-bottom:5px;">TEMPORARY PASSWORD:</p>
+                <code id="tempPassCode" style="font-size:1.2rem; letter-spacing:2px; font-weight:900;"></code>
+                <p style="font-size:0.75rem; color:#666; margin-top:10px;">Give this to the student. They must change it at login.</p>
+            </div>
+            
+            <form id="createStudentForm">
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="fullName" required placeholder="John Doe">
+                    <label>Student Full Name</label>
+                    <input type="text" id="fullName" required placeholder="Ex: Jhanvi Sharma">
                 </div>
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" id="email" required placeholder="student@example.com">
+                    <input type="email" id="email" required placeholder="student@email.com">
                 </div>
-                <button type="submit" class="btn-create" id="createBtn">
-                    Create Account
-                </button>
+                <button type="submit" class="btn-create" id="submitBtn">Create Student Account</button>
             </form>
             
-            <a href="/admin/" class="btn-back">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            <a href="/admin/" style="display:block; text-align:center; margin-top:1.5rem; font-size:0.85rem; color:#666; text-decoration:none;">
+                <i class="fas fa-arrow-left"></i> Cancel and go back
             </a>
         </div>
     </div>
     
+    <script src="../shared/supabase.js"></script>
     <script>
-        const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o';
-        
-        let supabaseClient = null;
-        
-        async function initSupabase() {
-            if (!supabaseClient) {
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-            return supabaseClient;
-        }
-        
-        async function checkAuth() {
-            const client = await initSupabase();
-            const { data: { user } } = await client.auth.getUser();
-            if (!user) {
-                window.location.href = '/login.html';
-                return false;
-            }
-            
-            const { data: profile } = await client
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single();
-            
-            if (profile?.role !== 'admin' && profile?.role !== 'coach') {
+        // Start Auth Check
+        (async () => {
+            const auth = await requireAuth();
+            if (!auth || auth.profile.role !== 'admin') {
                 window.location.href = '/';
-                return false;
             }
-            
-            return true;
+        })();
+
+        function generatePass() {
+            return Math.random().toString(36).slice(-8) + "!";
         }
-        
-        function generateTemporaryPassword() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-            let password = '';
-            for (let i = 0; i < 10; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return password;
-        }
-        
-        document.getElementById('createForm').addEventListener('submit', async (e) => {
+
+        document.getElementById('createStudentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const err = document.getElementById('errorMessage');
+            const succ = document.getElementById('successMessage');
+            const passBox = document.getElementById('passwordDisplay');
             
-            const fullName = document.getElementById('fullName').value;
             const email = document.getElementById('email').value;
-            const tempPassword = generateTemporaryPassword();
-            
-            const btn = document.getElementById('createBtn');
-            const successDiv = document.getElementById('successMessage');
-            const errorDiv = document.getElementById('errorMessage');
-            const passwordDiv = document.getElementById('generatedPassword');
-            
+            const name = document.getElementById('fullName').value;
+            const tempPass = generatePass();
+
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Creating...';
-            successDiv.classList.remove('show');
-            errorDiv.classList.remove('show');
-            passwordDiv.style.display = 'none';
-            
+            btn.textContent = "Processing...";
+            err.classList.remove('show');
+
             const client = await initSupabase();
-            
-            // Create user via admin API
-            const { data: authData, error: authError } = await client.auth.admin.createUser({
+
+            /* IMPORTANT: In the browser, we use signUp. 
+               This will send a confirmation email to the student.
+            */
+            const { data, error } = await client.auth.signUp({
                 email: email,
-                password: tempPassword,
-                email_confirm: true,
-                user_metadata: {
-                    full_name: fullName
+                password: tempPass,
+                options: {
+                    data: { full_name: name, role: 'student' }
                 }
             });
-            
-            if (authError) {
-                errorDiv.textContent = authError.message;
-                errorDiv.classList.add('show');
+
+            if (error) {
+                err.textContent = "Error: " + error.message;
+                err.classList.add('show');
                 btn.disabled = false;
-                btn.innerHTML = 'Create Account';
-                return;
+                btn.textContent = "Create Student Account";
+            } else {
+                // Success: Show the password so the admin can copy it
+                document.getElementById('tempPassCode').textContent = tempPass;
+                passBox.style.display = 'block';
+                succ.classList.add('show');
+                btn.textContent = "Student Created";
+                
+                // Also manually create the profile row if trigger fails
+                await client.from('profiles').insert([
+                    { id: data.user.id, email: email, full_name: name, role: 'student' }
+                ]);
             }
-            
-            // Create profile
-            const { error: profileError } = await client
-                .from('profiles')
-                .insert({
-                    id: authData.user.id,
-                    email: email,
-                    full_name: fullName,
-                    role: 'student'
-                });
-            
-            if (profileError) {
-                errorDiv.textContent = profileError.message;
-                errorDiv.classList.add('show');
-                btn.disabled = false;
-                btn.innerHTML = 'Create Account';
-                return;
-            }
-            
-            // Show success with password
-            passwordDiv.innerHTML = `
-                <strong><i class="fas fa-key"></i> Temporary Password:</strong><br>
-                <code style="font-size:1rem; background:#e8f5ee; padding:0.25rem 0.5rem; border-radius:4px;">${tempPassword}</code><br>
-                <small>Please share this with the student. They will be prompted to reset it on first login.</small>
-            `;
-            passwordDiv.style.display = 'block';
-            successDiv.classList.add('show');
-            
-            btn.disabled = false;
-            btn.innerHTML = 'Create Another Account';
-            document.getElementById('fullName').value = '';
-            document.getElementById('email').value = '';
         });
-        
-        async function handleLogout() {
-            const client = await initSupabase();
-            await client.auth.signOut();
-            window.location.href = '/login.html';
-        }
-        
-        checkAuth();
     </script>
 </body>
 </html>
