@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Progress · ElevateMe Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: #e8f5ee;
+        }
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #c8ecd4;
+        }
+        .logo h2 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #0a1a0f;
+        }
+        .logo h2 span { color: #2d7a4f; }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #2d4a35;
+            font-weight: 600;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid #c8ecd4;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #c65343;
+        }
+        .main-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .student-header {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #c8ecd4;
+        }
+        .student-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0a1a0f;
+        }
+        .student-email {
+            color: #4a6b55;
+            margin-top: 0.25rem;
+        }
+        .overall-progress {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e8f5ee;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .progress-track {
+            height: 8px;
+            background: #c8ecd4;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #2d7a4f;
+            border-radius: 4px;
+        }
+        .weeks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .week-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.2rem;
+            border: 1px solid #c8ecd4;
+        }
+        .week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .week-num {
+            font-weight: 800;
+            color: #2d7a4f;
+        }
+        .week-pct {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #4a6b55;
+        }
+        .week-title {
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+        }
+        .module-list {
+            list-style: none;
+            margin-top: 0.8rem;
+        }
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #f0f7f4;
+        }
+        .module-item:last-child { border-bottom: none; }
+        .module-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+        }
+        .module-check.completed {
+            background: #2d7a4f;
+            color: white;
+        }
+        .module-check.pending {
+            border: 2px solid #c8ecd4;
+        }
+        .btn-reset {
+            background: none;
+            border: 1px solid #c65343;
+            color: #c65343;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+        .btn-back {
+            background: #2d7a4f;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <h2>Elevate<span>Me</span></h2>
+        </div>
+        <div class="nav-links">
+            <a href="/admin/">Dashboard</a>
+            <a href="/admin/create-student.html">Add Student</a>
+            <button class="btn-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+    
+    <div class="main-container">
+        <a href="/admin/" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        
+        <div class="student-header" id="studentHeader">
+            <div class="student-name" id="studentName">Loading...</div>
+            <div class="student-email" id="studentEmail"></div>
+            <div class="overall-progress">
+                <div class="progress-label">
+                    <span>Overall Progress</span>
+                    <span id="overallPct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="overallBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="weeks-grid" id="weeksGrid">
+            <div style="text-align:center; padding:2rem;">Loading weeks...</div>
+        </div>
+    </div>
+    
+    <script>
+        const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o';
+        
+        let supabaseClient = null;
+        let studentId = null;
+        
+        async function initSupabase() {
+            if (!supabaseClient) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return supabaseClient;
+        }
+        
+        async function checkAuth() {
+            const client = await initSupabase();
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return false;
+            }
+            
+            const { data: profile } = await client
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+            
+            if (profile?.role !== 'admin' && profile?.role !== 'coach') {
+                window.location.href = '/';
+                return false;
+            }
+            
+            return true;
+        }
+        
+        async function loadStudent() {
+            const urlParams = new URLSearchParams(window.location.search);
+            studentId = urlParams.get('student');
+            
+            if (!studentId) {
+                window.location.href = '/admin/';
+                return;
+            }
+            
+            const client = await initSupabase();
+            
+            // Get student profile
+            const { data: profile, error: profileError } = await client
+                .from('profiles')
+                .select('*')
+                .eq('id', studentId)
+                .single();
+            
+            if (profileError || !profile) {
+                window.location.href = '/admin/';
+                return;
+            }
+            
+            document.getElementById('studentName').textContent = profile.full_name || 'Student';
+            document.getElementById('studentEmail').textContent = profile.email;
+            
+            // Get all progress for this student
+            const { data: progressData } = await client
+                .from('progress')
+                .select('*')
+                .eq('user_id', studentId);
+            
+            const progressMap = {};
+            progressData?.forEach(p => {
+                progressMap[p.module_id] = p.completed;
+            });
+            
+            // Define weeks (same as your dashboard)
+            const weeks = [
+                { num: 1, title: 'Foundations & Job Search', modules: 5 },
+                { num: 2, title: 'ATS & Resume Mastery', modules: 10 },
+                { num: 3, title: 'Elevator Pitch & Mock Interview', modules: 4 },
+                { num: 4, title: 'Communication Skills', modules: 4 },
+                { num: 5, title: 'Preparing for Interviews', modules: 3 },
+                { num: 6, title: 'Networking on LinkedIn', modules: 5 },
+                { num: 7, title: 'Informational Interviews', modules: 6 },
+                { num: 8, title: 'Handling Job Offers', modules: 4 },
+                { num: 9, title: 'Cultural Sensitivity', modules: 3 },
+                { num: 10, title: 'Success on the Job', modules: 3 }
+            ];
+            
+            // Calculate progress per week
+            const weekProgress = weeks.map(week => {
+                let completed = 0;
+                for (let m = 1; m <= week.modules; m++) {
+                    const moduleId = `w${week.num}m${m}`;
+                    if (progressMap[moduleId]) completed++;
+                }
+                const percent = Math.round((completed / week.modules) * 100);
+                return { ...week, completed, percent };
+            });
+            
+            const overall = Math.round(weekProgress.reduce((sum, w) => sum + w.percent, 0) / weeks.length);
+            document.getElementById('overallPct').textContent = overall + '%';
+            document.getElementById('overallBar').style.width = overall + '%';
+            
+            // Render weeks
+            const weeksGrid = document.getElementById('weeksGrid');
+            weeksGrid.innerHTML = weekProgress.map(week => `
+                <div class="week-card">
+                    <div class="week-header">
+                        <span class="week-num">Week ${week.num}</span>
+                        <span class="week-pct">${week.percent}%</span>
+                    </div>
+                    <div class="week-title">${week.title}</div>
+                    <div class="progress-track" style="height:4px;">
+                        <div class="progress-fill" style="width:${week.percent}%"></div>
+                    </div>
+                    <ul class="module-list">
+                        ${Array.from({ length: week.modules }, (_, i) => {
+                            const moduleId = `w${week.num}m${i + 1}`;
+                            const completed = progressMap[moduleId];
+                            return `
+                                <li class="module-item">
+                                    <div class="module-check ${completed ? 'completed' : 'pending'}">
+                                        ${completed ? '<i class="fas fa-check"></i>' : ''}
+                                    </div>
+                                    <span>Module ${i + 1}</span>
+                                </li>
+                            `;
+                        }).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+        
+        async function handleLogout() {
+            const client = await initSupabase();
+            await client.auth.signOut();
+            window.location.href = '/login.html';
+        }
+        
+        (async () => {
+            await checkAuth();
+            await loadStudent();
+        })();
+    </script>
+</body>
+</html>
